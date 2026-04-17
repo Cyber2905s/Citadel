@@ -1,0 +1,82 @@
+# One command: docker compose up --build
+# UI: http://localhost:8080  API docs: http://localhost:8080/docs  Metrics: http://localhost:3000/metrics
+x-app-env: &app-env
+  DATABASE_URL: postgres://citadel_app:citadel_app@postgres:5432/citadel
+  MIGRATION_DATABASE_URL: postgres://postgres:postgres@postgres:5432/citadel
+  APP_DB_USER: citadel_app
+  APP_DB_PASSWORD: citadel_app
+  REDIS_URL: redis://redis:6379
+  JWT_SECRET: ${JWT_SECRET:-compose-demo-secret-change-me-please-0123456789}
+  APP_URL: http://localhost:8080
+  # "development" so invitation links are echoed back to the demo UI.
+  NODE_ENV: development
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: citadel
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d citadel']
+      interval: 2s
+      retries: 30
+
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      retries: 30
+
+  migrate:
+    build: .
+    command: ['node', 'src/db/migrate.js']
+    environment: *app-env
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    build: .
+    environment: *app-env
+    ports: ['3000:3000']
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/readyz']
+      interval: 5s
+      retries: 20
+
+  worker:
+    build: .
+    command: ['node', 'src/worker.js']
+    environment: *app-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  ui:
+    image: nginx:1.29-alpine
+    ports: ['8080:80']
+    volumes:
+      - ./ui:/usr/share/nginx/html:ro
+      - ./ui/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api: { condition: service_healthy }
+
+  # Demo data: docker compose run --rm seed
+  seed:
+    build: .
+    command: ['node', 'scripts/seed.js']
+    environment:
+      API_URL: http://api:3000
+    profiles: ['seed']
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  pgdata:
