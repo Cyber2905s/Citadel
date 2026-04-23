@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Citadel Admin</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <strong class="brand">Citadel</strong>
+      <label class="switcher"
+        >Session
+        <select id="session-select" aria-label="Active session"></select>
+      </label>
+      <label class="switcher" id="org-switch-wrap" hidden
+        >Org
+        <select id="org-select" aria-label="Switch organization"></select>
+      </label>
+      <span id="whoami" class="muted"></span>
+      <button id="new-session" type="button">+ Sign in / sign up</button>
+      <button id="logout" type="button" class="ghost">Log out</button>
+      <a href="/docs" target="_blank" rel="noopener">API docs</a>
+    </header>
+
+    <main>
+      <section id="auth" hidden>
+        <div class="cards">
+          <form id="signup-form" class="card">
+            <h2>Sign up a new org</h2>
+            <input name="orgName" placeholder="Organization name" required />
+            <input name="name" placeholder="Your name" required />
+            <input name="email" type="email" placeholder="Email" required />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password (8+ chars)"
+              minlength="8"
+              required
+            />
+            <button>Create org</button>
+          </form>
+          <form id="login-form" class="card">
+            <h2>Log in</h2>
+            <input name="email" type="email" placeholder="Email" required />
+            <input name="password" type="password" placeholder="Password" required />
+            <button>Log in</button>
+            <p class="muted">
+              Seeded users: alice@acme.test, bob@acme.test, carol@acme.test, dan@globex.test
+              (password123)
+            </p>
+          </form>
+          <form id="accept-form" class="card">
+            <h2>Accept invitation</h2>
+            <input name="token" placeholder="Invitation token" required />
+            <input name="name" placeholder="Your name (new accounts)" />
+            <input name="password" type="password" placeholder="Password" minlength="8" required />
+            <button>Join org</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="app" hidden>
+        <nav role="tablist">
+          <button data-tab="projects" class="active">Projects</button>
+          <button data-tab="members">Members</button>
+          <button data-tab="keys">API keys</button>
+          <button data-tab="audit">Audit log</button>
+          <button data-tab="usage">Plan &amp; limits</button>
+          <button data-tab="isolation">Isolation probe</button>
+        </nav>
+
+        <div data-panel="projects">
+          <form id="project-form" class="inline">
+            <input name="name" placeholder="New project name" required />
+            <button>Create project</button>
+          </form>
+          <div class="split">
+            <ul id="project-list" class="list"></ul>
+            <div id="project-detail"></div>
+          </div>
+        </div>
+
+        <div data-panel="members" hidden>
+          <form id="invite-form" class="inline">
+            <input name="email" type="email" placeholder="Invite email" required />
+            <select name="role">
+              <option value="member">member</option>
+              <option value="admin">admin</option>
+            </select>
+            <button>Invite</button>
+          </form>
+          <div id="invite-result"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="member-rows"></tbody>
+          </table>
+          <h3>Pending invitations</h3>
+          <ul id="invite-list" class="list"></ul>
+        </div>
+
+        <div data-panel="keys" hidden>
+          <form id="key-form" class="inline">
+            <input name="name" placeholder="Key name" required />
+            <select name="role">
+              <option value="member">member</option>
+              <option value="admin">admin</option>
+            </select>
+            <button>Create key</button>
+          </form>
+          <div id="key-result"></div>
+          <ul id="key-list" class="list"></ul>
+        </div>
+
+        <div data-panel="audit" hidden>
+          <table>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="audit-rows"></tbody>
+          </table>
+          <button id="audit-more" type="button" hidden>Load more</button>
+        </div>
+
+        <div data-panel="usage" hidden>
+          <div class="cards">
+            <div class="card">
+              <h2>Plan</h2>
+              <select id="plan-select">
+                <option>free</option>
+                <option>pro</option>
+                <option>enterprise</option>
+              </select>
+              <button id="plan-save" type="button">Change plan</button>
+              <pre id="limits"></pre>
+            </div>
+            <div class="card">
+              <h2>Rate limit burst</h2>
+              <p class="muted">
+                Fires N requests at <code>GET /v1/projects</code> as fast as possible.
+              </p>
+              <input id="burst-n" type="number" value="80" min="1" max="1000" />
+              <button id="burst" type="button">Fire burst</button>
+              <pre id="burst-result"></pre>
+            </div>
+          </div>
+          <pre id="usage"></pre>
+        </div>
+
+        <div data-panel="isolation" hidden>
+          <p>
+            Paste a project ID from <em>another</em> org (use "copy id" on a project there) and try
+            to read it with the current session. RLS makes it invisible: expect <code>404</code>.
+          </p>
+          <form id="probe-form" class="inline">
+            <input name="id" placeholder="Project UUID from another org" required />
+            <button>Try to read it</button>
+          </form>
+          <pre id="probe-result"></pre>
+        </div>
+      </section>
+    </main>
+
+    <div id="log" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
