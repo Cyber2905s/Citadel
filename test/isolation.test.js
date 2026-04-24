@@ -8,16 +8,28 @@ let a, b, projectA, projectB;
 before(async () => {
   a = await signupOrg('Alpha');
   b = await signupOrg('Bravo');
-  projectA = (await api('POST', '/v1/projects', { token: a.token, body: { name: 'A secret' } })).body;
-  projectB = (await api('POST', '/v1/projects', { token: b.token, body: { name: 'B secret' } })).body;
-  await api('POST', `/v1/projects/${projectB.id}/tasks`, { token: b.token, body: { title: 'B task' } });
+  projectA = (await api('POST', '/v1/projects', { token: a.token, body: { name: 'A secret' } }))
+    .body;
+  projectB = (await api('POST', '/v1/projects', { token: b.token, body: { name: 'B secret' } }))
+    .body;
+  await api('POST', `/v1/projects/${projectB.id}/tasks`, {
+    token: b.token,
+    body: { title: 'B task' },
+  });
 });
 
 // These run the kind of queries a buggy handler would: no tenant filter at all,
 // or an explicit filter on the *other* tenant. RLS must still return nothing of B's.
 test('buggy queries as tenant A never see tenant B rows', async () => {
   await withTenant(a.tenantId, async (c) => {
-    for (const table of ['projects', 'tasks', 'memberships', 'audit_logs', 'api_keys', 'invitations']) {
+    for (const table of [
+      'projects',
+      'tasks',
+      'memberships',
+      'audit_logs',
+      'api_keys',
+      'invitations',
+    ]) {
       const { rows } = await c.query(`SELECT tenant_id FROM ${table}`);
       assert.ok(
         rows.every((r) => r.tenant_id === a.tenantId),

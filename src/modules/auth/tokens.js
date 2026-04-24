@@ -20,7 +20,10 @@ export const signAccessToken = (userId, tenantId) =>
 export async function verifyAccessToken(token) {
   try {
     const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
-    return { userId: /** @type {string} */ (payload.sub), tenantId: /** @type {string} */ (payload.tid) };
+    return {
+      userId: /** @type {string} */ (payload.sub),
+      tenantId: /** @type {string} */ (payload.tid),
+    };
   } catch {
     throw new HttpError(401, 'Invalid or expired access token');
   }

@@ -82,7 +82,11 @@ export async function publicAuthRoutes(app) {
         return user.id;
       });
       reply.code(201);
-      return { ...(await issueTokens(userId, tenantId)), tenantId, tenants: await userTenants(userId) };
+      return {
+        ...(await issueTokens(userId, tenantId)),
+        tenantId,
+        tenants: await userTenants(userId),
+      };
     },
   );
 
@@ -97,7 +101,11 @@ export async function publicAuthRoutes(app) {
         body: {
           type: 'object',
           required: ['email', 'password'],
-          properties: { email, password: { type: 'string' }, tenantId: { type: 'string', format: 'uuid' } },
+          properties: {
+            email,
+            password: { type: 'string' },
+            tenantId: { type: 'string', format: 'uuid' },
+          },
         },
         response: { 200: session },
       },
@@ -105,7 +113,9 @@ export async function publicAuthRoutes(app) {
     async (req) => {
       const {
         rows: [user],
-      } = await query('SELECT id, password_hash FROM users WHERE email = lower($1)', [req.body.email]);
+      } = await query('SELECT id, password_hash FROM users WHERE email = lower($1)', [
+        req.body.email,
+      ]);
       const ok = await verifyPassword(req.body.password, user?.password_hash ?? DUMMY_HASH);
       if (!user || !ok) throw new HttpError(401, 'Invalid email or password');
 
@@ -119,7 +129,11 @@ export async function publicAuthRoutes(app) {
         req.auth = { actorType: 'user', actorId: user.id };
         return audit(c, req, 'auth.login');
       });
-      return { ...(await issueTokens(user.id, tenant.tenant_id)), tenantId: tenant.tenant_id, tenants };
+      return {
+        ...(await issueTokens(user.id, tenant.tenant_id)),
+        tenantId: tenant.tenant_id,
+        tenants,
+      };
     },
   );
 
@@ -184,7 +198,11 @@ export async function sessionAuthRoutes(app) {
             properties: {
               user: {
                 type: ['object', 'null'],
-                properties: { id: { type: 'string' }, email: { type: 'string' }, name: { type: 'string' } },
+                properties: {
+                  id: { type: 'string' },
+                  email: { type: 'string' },
+                  name: { type: 'string' },
+                },
               },
               tenantId: { type: 'string' },
               role: { type: 'string' },
@@ -201,7 +219,14 @@ export async function sessionAuthRoutes(app) {
       const user = userId
         ? (await query('SELECT id, email, name FROM users WHERE id = $1', [userId])).rows[0]
         : null;
-      return { user, tenantId, role, plan, actorType, tenants: userId ? await userTenants(userId) : [] };
+      return {
+        user,
+        tenantId,
+        role,
+        plan,
+        actorType,
+        tenants: userId ? await userTenants(userId) : [],
+      };
     },
   );
 

@@ -35,7 +35,10 @@ async function org(orgName, owner, plan) {
 }
 
 async function invite(owner, email, name, role) {
-  const inv = await call('POST', '/org/invitations', { token: owner.accessToken, body: { email, role } });
+  const inv = await call('POST', '/org/invitations', {
+    token: owner.accessToken,
+    body: { email, role },
+  });
   const token = new URL(inv.acceptUrl).searchParams.get('invite');
   return call('POST', '/invitations/accept', { body: { token, name, password: PASSWORD } });
 }
@@ -47,22 +50,46 @@ async function projects(session, list) {
       body: { name, description: `${name} (seeded)` },
     });
     for (const [title, status] of tasks) {
-      await call('POST', `/projects/${p.id}/tasks`, { token: session.accessToken, body: { title, status } });
+      await call('POST', `/projects/${p.id}/tasks`, {
+        token: session.accessToken,
+        body: { title, status },
+      });
     }
   }
 }
 
-const acme = await org('Acme Corp', { email: 'alice@acme.test', name: 'Alice (Acme owner)' }, 'pro');
+const acme = await org(
+  'Acme Corp',
+  { email: 'alice@acme.test', name: 'Alice (Acme owner)' },
+  'pro',
+);
 if (acme) {
   await invite(acme, 'bob@acme.test', 'Bob (Acme admin)', 'admin');
   await invite(acme, 'carol@acme.test', 'Carol (Acme member)', 'member');
   await projects(acme, [
-    ['Website relaunch', [['Design mockups', 'done'], ['Build landing page', 'doing'], ['SEO audit', 'todo']]],
-    ['Q4 planning', [['Draft OKRs', 'todo'], ['Budget review', 'todo']]],
+    [
+      'Website relaunch',
+      [
+        ['Design mockups', 'done'],
+        ['Build landing page', 'doing'],
+        ['SEO audit', 'todo'],
+      ],
+    ],
+    [
+      'Q4 planning',
+      [
+        ['Draft OKRs', 'todo'],
+        ['Budget review', 'todo'],
+      ],
+    ],
   ]);
 }
 
-const globex = await org('Globex', { email: 'dan@globex.test', name: 'Dan (Globex owner)' }, 'free');
+const globex = await org(
+  'Globex',
+  { email: 'dan@globex.test', name: 'Dan (Globex owner)' },
+  'free',
+);
 if (globex) {
   await projects(globex, [['Secret doomsday device', [['Acquire volcano', 'doing']]]]);
   // Alice belongs to both orgs, to demo org switching.

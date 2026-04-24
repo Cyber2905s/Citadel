@@ -40,13 +40,21 @@ export async function signupOrg(name = 'Org') {
     body: { email, password: 'password123', name: `${name} Owner`, orgName: name },
   });
   assert.equal(res.status, 201, JSON.stringify(res.body));
-  return { email, token: res.body.accessToken, refreshToken: res.body.refreshToken, tenantId: res.body.tenantId };
+  return {
+    email,
+    token: res.body.accessToken,
+    refreshToken: res.body.refreshToken,
+    tenantId: res.body.tenantId,
+  };
 }
 
 /** Invites `role` into the owner's org and accepts it; returns the new member's session. */
 export async function addMember(owner, role) {
   const email = uniqueEmail(role);
-  const inv = await api('POST', '/v1/org/invitations', { token: owner.token, body: { email, role } });
+  const inv = await api('POST', '/v1/org/invitations', {
+    token: owner.token,
+    body: { email, role },
+  });
   assert.equal(inv.status, 201, JSON.stringify(inv.body));
   const token = new URL(inv.body.acceptUrl).searchParams.get('invite');
   const res = await api('POST', '/v1/invitations/accept', {
@@ -54,5 +62,10 @@ export async function addMember(owner, role) {
   });
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const me = await api('GET', '/v1/auth/me', { token: res.body.accessToken });
-  return { email, token: res.body.accessToken, userId: me.body.user.id, tenantId: res.body.tenantId };
+  return {
+    email,
+    token: res.body.accessToken,
+    userId: me.body.user.id,
+    tenantId: res.body.tenantId,
+  };
 }

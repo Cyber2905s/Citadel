@@ -10,7 +10,10 @@ export const config = {
   env: env.NODE_ENV ?? 'development',
   port: Number(env.PORT ?? 3000),
   logLevel: env.LOG_LEVEL ?? 'info',
-  databaseUrl: required('DATABASE_URL', 'postgres://citadel_app:citadel_app@localhost:5432/citadel'),
+  databaseUrl: required(
+    'DATABASE_URL',
+    'postgres://citadel_app:citadel_app@localhost:5432/citadel',
+  ),
   migrationDatabaseUrl: required(
     'MIGRATION_DATABASE_URL',
     'postgres://postgres:postgres@localhost:5432/citadel',

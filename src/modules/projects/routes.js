@@ -119,7 +119,12 @@ export async function projectRoutes(app) {
     '/:id',
     {
       preHandler: read,
-      schema: { tags: ['projects'], summary: 'Get a project', params: idParams, response: { 200: project } },
+      schema: {
+        tags: ['projects'],
+        summary: 'Get a project',
+        params: idParams,
+        response: { 200: project },
+      },
     },
     async (req) => {
       const { rows } = await req.tx((c) =>
@@ -160,7 +165,11 @@ export async function projectRoutes(app) {
     '/:id',
     {
       preHandler: requirePermission('projects:delete'),
-      schema: { tags: ['projects'], summary: 'Soft-delete a project and its tasks', params: idParams },
+      schema: {
+        tags: ['projects'],
+        summary: 'Soft-delete a project and its tasks',
+        params: idParams,
+      },
     },
     async (req, reply) => {
       await req.tx(async (c) => {
@@ -267,7 +276,13 @@ export async function taskRoutes(app) {
           `UPDATE tasks SET title = COALESCE($2, title), status = COALESCE($3, status),
              assignee_id = CASE WHEN $4 THEN $5::uuid ELSE assignee_id END, updated_at = now()
            WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
-          [req.params.id, b.title ?? null, b.status ?? null, 'assignee_id' in b, b.assignee_id ?? null],
+          [
+            req.params.id,
+            b.title ?? null,
+            b.status ?? null,
+            'assignee_id' in b,
+            b.assignee_id ?? null,
+          ],
         );
       });
       if (!rows[0]) throw notFound('Task');

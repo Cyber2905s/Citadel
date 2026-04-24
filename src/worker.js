@@ -14,7 +14,10 @@ const log = pino({ level: config.logLevel, base: { service: 'worker' } });
 const emailWorker = new Worker(
   'email',
   async (job) => {
-    log.info({ job_id: job.id, to: job.data.to, subject: job.data.subject, text: job.data.text }, 'email sent');
+    log.info(
+      { job_id: job.id, to: job.data.to, subject: job.data.subject, text: job.data.text },
+      'email sent',
+    );
   },
   { connection, concurrency: 5 },
 );

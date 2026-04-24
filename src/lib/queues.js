@@ -13,7 +13,11 @@ export const connection = {
 
 export const emailQueue = new Queue('email', {
   connection,
-  defaultJobOptions: { attempts: 5, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: 1000 },
+  defaultJobOptions: {
+    attempts: 5,
+    backoff: { type: 'exponential', delay: 2000 },
+    removeOnComplete: 1000,
+  },
 });
 
 export const usageQueue = new Queue('usage', { connection });

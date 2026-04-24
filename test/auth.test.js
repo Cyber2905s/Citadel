@@ -5,13 +5,17 @@ import { query, withTenant } from '../src/db/index.js';
 
 test('login rejects bad passwords and unknown emails identically', async () => {
   const org = await signupOrg('Login');
-  const bad = await api('POST', '/v1/auth/login', { body: { email: org.email, password: 'nope-nope' } });
+  const bad = await api('POST', '/v1/auth/login', {
+    body: { email: org.email, password: 'nope-nope' },
+  });
   const unknown = await api('POST', '/v1/auth/login', {
     body: { email: 'ghost@test.dev', password: 'nope-nope' },
   });
   assert.equal(bad.status, 401);
   assert.deepEqual(bad.body, unknown.body);
-  const ok = await api('POST', '/v1/auth/login', { body: { email: org.email, password: 'password123' } });
+  const ok = await api('POST', '/v1/auth/login', {
+    body: { email: org.email, password: 'password123' },
+  });
   assert.equal(ok.status, 200);
 });
 
@@ -22,9 +26,13 @@ test('refresh tokens rotate, and reuse revokes the whole family', async () => {
   assert.notEqual(first.body.refreshToken, org.refreshToken);
 
   // Attacker replays the old token -> rejected, and the legitimate new one dies too.
-  const replay = await api('POST', '/v1/auth/refresh', { body: { refreshToken: org.refreshToken } });
+  const replay = await api('POST', '/v1/auth/refresh', {
+    body: { refreshToken: org.refreshToken },
+  });
   assert.equal(replay.status, 401);
-  const next = await api('POST', '/v1/auth/refresh', { body: { refreshToken: first.body.refreshToken } });
+  const next = await api('POST', '/v1/auth/refresh', {
+    body: { refreshToken: first.body.refreshToken },
+  });
   assert.equal(next.status, 401);
 });
 
@@ -37,7 +45,9 @@ test('passwords and API keys are only stored hashed', async () => {
 
   const { rows } = await withTenant(org.tenantId, (c) => c.query('SELECT key_hash FROM api_keys'));
   assert.notEqual(rows[0].key_hash, key);
-  const { rows: users } = await query('SELECT password_hash FROM users WHERE email = $1', [org.email]);
+  const { rows: users } = await query('SELECT password_hash FROM users WHERE email = $1', [
+    org.email,
+  ]);
   assert.match(users[0].password_hash, /^scrypt\$/);
 
   assert.equal((await api('GET', '/v1/projects', { apiKey: key })).status, 200);
@@ -56,9 +66,13 @@ test('a user in two orgs can switch between them', async () => {
   });
   const token = new URL(inv.body.acceptUrl).searchParams.get('invite');
   // Existing account: must prove it owns the email by giving its password.
-  const wrong = await api('POST', '/v1/invitations/accept', { body: { token, password: 'wrongpass' } });
+  const wrong = await api('POST', '/v1/invitations/accept', {
+    body: { token, password: 'wrongpass' },
+  });
   assert.equal(wrong.status, 401);
-  const accepted = await api('POST', '/v1/invitations/accept', { body: { token, password: 'password123' } });
+  const accepted = await api('POST', '/v1/invitations/accept', {
+    body: { token, password: 'password123' },
+  });
   assert.equal(accepted.status, 200);
   assert.equal(accepted.body.tenants.length, 2);
 
@@ -71,7 +85,9 @@ test('a user in two orgs can switch between them', async () => {
   assert.equal(me.body.tenantId, away.tenantId);
   assert.equal(me.body.role, 'member');
 
-  const reuse = await api('POST', '/v1/invitations/accept', { body: { token, password: 'password123' } });
+  const reuse = await api('POST', '/v1/invitations/accept', {
+    body: { token, password: 'password123' },
+  });
   assert.equal(reuse.status, 400);
 });
 

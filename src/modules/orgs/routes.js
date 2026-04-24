@@ -43,7 +43,10 @@ const invitation = {
 export function enforceLimit(plan, limitName, used) {
   const max = PLANS[plan][limitName];
   if (max !== null && used >= max) {
-    throw new HttpError(402, `The ${plan} plan allows at most ${max} (${limitName}); upgrade to add more`);
+    throw new HttpError(
+      402,
+      `The ${plan} plan allows at most ${max} (${limitName}); upgrade to add more`,
+    );
   }
 }
 
@@ -129,7 +132,11 @@ export async function orgRoutes(app) {
     '/members',
     {
       preHandler: requirePermission('members:read'),
-      schema: { tags: ['members'], summary: 'List members', response: { 200: { type: 'array', items: member } } },
+      schema: {
+        tags: ['members'],
+        summary: 'List members',
+        response: { 200: { type: 'array', items: member } },
+      },
     },
     async (req) =>
       req.tx(
@@ -186,16 +193,21 @@ export async function orgRoutes(app) {
     '/members/:userId',
     {
       preHandler: requirePermission('members:remove'),
-      schema: { tags: ['members'], summary: 'Remove a member (soft delete)', params: uuidParam('userId') },
+      schema: {
+        tags: ['members'],
+        summary: 'Remove a member (soft delete)',
+        params: uuidParam('userId'),
+      },
     },
     async (req, reply) => {
       await req.tx(async (c) => {
         const { userId } = req.params;
         const {
           rows: [target],
-        } = await c.query('SELECT role FROM memberships WHERE user_id = $1 AND deleted_at IS NULL', [
-          userId,
-        ]);
+        } = await c.query(
+          'SELECT role FROM memberships WHERE user_id = $1 AND deleted_at IS NULL',
+          [userId],
+        );
         if (!target) throw notFound('Member');
         if (target.role === 'owner' && req.auth.role !== 'owner') {
           throw new HttpError(403, 'Only owners can remove owners');

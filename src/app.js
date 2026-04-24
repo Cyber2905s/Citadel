@@ -45,7 +45,11 @@ export async function buildApp({ logger = { level: config.logLevel } } = {}) {
   });
   app.addHook('onResponse', async (req, reply) => {
     httpDuration.observe(
-      { method: req.method, route: req.routeOptions.url ?? 'unmatched', status_code: reply.statusCode },
+      {
+        method: req.method,
+        route: req.routeOptions.url ?? 'unmatched',
+        status_code: reply.statusCode,
+      },
       reply.elapsedTime / 1000,
     );
   });
@@ -53,8 +57,13 @@ export async function buildApp({ logger = { level: config.logLevel } } = {}) {
   app.setErrorHandler((err, req, reply) => {
     const mapped = PG_ERRORS[err.code];
     if (mapped) {
-      req.log.info({ pg_code: err.code, detail: err.detail }, 'database constraint rejected request');
-      return reply.code(mapped[0]).send({ statusCode: mapped[0], error: mapped[1], message: mapped[1] });
+      req.log.info(
+        { pg_code: err.code, detail: err.detail },
+        'database constraint rejected request',
+      );
+      return reply
+        .code(mapped[0])
+        .send({ statusCode: mapped[0], error: mapped[1], message: mapped[1] });
     }
     const status = err.statusCode ?? 500;
     if (status >= 500) req.log.error({ err }, 'request failed');

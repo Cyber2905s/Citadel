@@ -23,7 +23,13 @@ export default async function apiKeyRoutes(app) {
 
   app.get(
     '/',
-    { schema: { tags: ['api-keys'], summary: 'List active API keys', response: { 200: { type: 'array', items: apiKey } } } },
+    {
+      schema: {
+        tags: ['api-keys'],
+        summary: 'List active API keys',
+        response: { 200: { type: 'array', items: apiKey } },
+      },
+    },
     async (req) =>
       req.tx(
         async (c) =>

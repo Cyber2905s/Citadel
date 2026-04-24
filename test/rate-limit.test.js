@@ -10,7 +10,7 @@ let noisy, quiet;
 
 before(async () => {
   // Fixed one-minute windows: don't start a burst right before a window flips.
-  const secondsLeft = 60 - (Date.now() / 1000) % 60;
+  const secondsLeft = 60 - ((Date.now() / 1000) % 60);
   if (secondsLeft < 15) await sleep(secondsLeft * 1000 + 100);
   noisy = await signupOrg('Noisy');
   quiet = await signupOrg('Quiet');
@@ -40,11 +40,17 @@ test('plan limits cap resources: free plan allows 3 projects', async () => {
     const r = await api('POST', '/v1/projects', { token: quiet.token, body: { name: `p${i}` } });
     assert.equal(r.status, 201);
   }
-  const over = await api('POST', '/v1/projects', { token: quiet.token, body: { name: 'one too many' } });
+  const over = await api('POST', '/v1/projects', {
+    token: quiet.token,
+    body: { name: 'one too many' },
+  });
   assert.equal(over.status, 402);
 
   await api('PATCH', '/v1/org', { token: quiet.token, body: { plan: 'pro' } });
-  const after = await api('POST', '/v1/projects', { token: quiet.token, body: { name: 'fits now' } });
+  const after = await api('POST', '/v1/projects', {
+    token: quiet.token,
+    body: { name: 'fits now' },
+  });
   assert.equal(after.status, 201);
 });
 

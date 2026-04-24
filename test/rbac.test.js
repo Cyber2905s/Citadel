@@ -47,7 +47,8 @@ test('admin: can invite and read audit log, but not change plan, roles or remove
   assert.equal((await api('PATCH', '/v1/org', { ...t, body: { plan: 'enterprise' } })).status, 403);
   const me = await api('GET', '/v1/auth/me', { token: owner.token });
   assert.equal(
-    (await api('PATCH', `/v1/org/members/${member.userId}`, { ...t, body: { role: 'admin' } })).status,
+    (await api('PATCH', `/v1/org/members/${member.userId}`, { ...t, body: { role: 'admin' } }))
+      .status,
     403,
   );
   assert.equal((await api('DELETE', `/v1/org/members/${me.body.user.id}`, t)).status, 403);
@@ -77,7 +78,10 @@ test('owner: role changes take effect immediately, and the last owner is protect
 
 test('removed member loses access immediately, and removal is audited', async () => {
   const victim = await addMember(owner, 'member');
-  assert.equal((await api('DELETE', `/v1/org/members/${victim.userId}`, { token: admin.token })).status, 204);
+  assert.equal(
+    (await api('DELETE', `/v1/org/members/${victim.userId}`, { token: admin.token })).status,
+    204,
+  );
   assert.equal((await api('GET', '/v1/projects', { token: victim.token })).status, 401);
 
   const log = await api('GET', '/v1/audit-logs?action=member.removed', { token: owner.token });

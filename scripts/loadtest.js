@@ -11,7 +11,10 @@ const CONNECTIONS = Number(process.env.CONNECTIONS ?? 50);
 async function post(path, body, token) {
   const res = await fetch(`${API}/v1${path}`, {
     method: path === '/org' ? 'PATCH' : 'POST',
-    headers: { 'content-type': 'application/json', ...(token && { authorization: `Bearer ${token}` }) },
+    headers: {
+      'content-type': 'application/json',
+      ...(token && { authorization: `Bearer ${token}` }),
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`${path}: ${res.status} ${await res.text()}`);
@@ -35,8 +38,9 @@ for (let i = 0; i < TENANTS; i++) {
 
 function bench(title, opts) {
   return new Promise((resolve, reject) => {
-    const inst = autocannon({ url: API, connections: CONNECTIONS, duration: DURATION, ...opts }, (err, r) =>
-      err ? reject(err) : resolve(r),
+    const inst = autocannon(
+      { url: API, connections: CONNECTIONS, duration: DURATION, ...opts },
+      (err, r) => (err ? reject(err) : resolve(r)),
     );
     autocannon.track(inst, { renderProgressBar: false, renderResultsTable: false });
   }).then((r) => {
@@ -54,7 +58,10 @@ await bench(`GET /v1/projects (${TENANTS} tenants, JWT + RLS + rate limit)`, {
     {
       method: 'GET',
       path: '/v1/projects',
-      setupRequest: (req) => ({ ...req, headers: { authorization: `Bearer ${tokens[n++ % tokens.length]}` } }),
+      setupRequest: (req) => ({
+        ...req,
+        headers: { authorization: `Bearer ${tokens[n++ % tokens.length]}` },
+      }),
     },
   ],
 });
