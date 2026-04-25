@@ -18,6 +18,8 @@ services:
       POSTGRES_DB: citadel
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    # Published for local dev/tests; override if the port is taken.
+    ports: ['127.0.0.1:${PG_PORT:-5432}:5432']
     volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:
@@ -27,6 +29,7 @@ services:
 
   redis:
     image: redis:8-alpine
+    ports: ['127.0.0.1:${REDIS_PORT:-6379}:6379']
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 2s
