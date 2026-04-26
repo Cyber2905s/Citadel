@@ -13,7 +13,7 @@
     "migrate": "node src/db/migrate.js",
     "seed": "node scripts/seed.js",
     "loadtest": "node scripts/loadtest.js",
-    "test": "node --test --test-concurrency=1 test/",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
