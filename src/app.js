@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import Fastify from 'fastify';
+import Fastify, { LogController } from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { config } from './config.js';
@@ -28,7 +28,7 @@ export async function buildApp({ logger = { level: config.logLevel } } = {}) {
   const app = Fastify({
     logger,
     requestIdHeader: 'x-request-id',
-    requestIdLogLabel: 'request_id',
+    logController: new LogController({ requestIdLogLabel: 'request_id' }),
     genReqId: () => randomUUID(),
     trustProxy: true,
     ajv: { customOptions: { removeAdditional: 'all' } },
