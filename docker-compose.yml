@@ -7,7 +7,7 @@ x-app-env: &app-env
   APP_DB_PASSWORD: citadel_app
   REDIS_URL: redis://redis:6379
   JWT_SECRET: ${JWT_SECRET:-compose-demo-secret-change-me-please-0123456789}
-  APP_URL: http://localhost:8080
+  APP_URL: http://localhost:${UI_PORT:-8080}
   # "development" so invitation links are echoed back to the demo UI.
   NODE_ENV: development
 
@@ -45,7 +45,7 @@ services:
   api:
     build: .
     environment: *app-env
-    ports: ['3000:3000']
+    ports: ['${API_PORT:-3000}:3000']
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -64,7 +64,7 @@ services:
 
   ui:
     image: nginx:1.29-alpine
-    ports: ['8080:80']
+    ports: ['${UI_PORT:-8080}:80']
     volumes:
       - ./ui:/usr/share/nginx/html:ro
       - ./ui/nginx.conf:/etc/nginx/conf.d/default.conf:ro
