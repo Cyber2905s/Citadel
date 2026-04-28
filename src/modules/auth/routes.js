@@ -38,7 +38,7 @@ const DUMMY_HASH = await hashPassword('timing-equalizer');
 
 /** Public auth endpoints: signup, login, refresh, logout. */
 export async function publicAuthRoutes(app) {
-  const limited = { preHandler: ipRateLimit(20) };
+  const limited = { preHandler: ipRateLimit() };
 
   app.post(
     '/signup',

@@ -2,6 +2,7 @@ import { PLANS } from '../lib/plans.js';
 import { redis } from '../lib/redis.js';
 import { rateLimited } from '../lib/metrics.js';
 import { HttpError } from '../lib/errors.js';
+import { config } from '../config.js';
 
 const USAGE_TTL_SECONDS = 3 * 24 * 3600;
 
@@ -56,7 +57,7 @@ export async function tenantRateLimit(req, reply) {
 
 /** preHandler for unauthenticated endpoints (login, signup...): per-IP limit. */
 export const ipRateLimit =
-  (limit = 20) =>
+  (limit = config.authRateLimitPerMinute) =>
   async (req, reply) => {
     const r = await hit(`ip:${req.routeOptions.url}:${req.ip}`, limit);
     applyHeaders(reply, r);

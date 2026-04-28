@@ -30,7 +30,7 @@ export async function buildApp({ logger = { level: config.logLevel } } = {}) {
     requestIdHeader: 'x-request-id',
     logController: new LogController({ requestIdLogLabel: 'request_id' }),
     genReqId: () => randomUUID(),
-    trustProxy: true,
+    trustProxy: config.trustProxy,
     ajv: { customOptions: { removeAdditional: 'all' } },
   });
 

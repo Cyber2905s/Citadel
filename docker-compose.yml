@@ -8,6 +8,9 @@ x-app-env: &app-env
   REDIS_URL: redis://redis:6379
   JWT_SECRET: ${JWT_SECRET:-compose-demo-secret-change-me-please-0123456789}
   APP_URL: http://localhost:${UI_PORT:-8080}
+  # nginx (UI) forwards the real client IP; trust private-network proxies only.
+  TRUST_PROXY: uniquelocal
+  AUTH_RATE_LIMIT_PER_MINUTE: ${AUTH_RATE_LIMIT_PER_MINUTE:-20}
   # "development" so invitation links are echoed back to the demo UI.
   NODE_ENV: development
 

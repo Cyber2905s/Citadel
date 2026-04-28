@@ -311,7 +311,7 @@ export async function acceptInvitationRoute(app) {
   app.post(
     '/accept',
     {
-      preHandler: ipRateLimit(20),
+      preHandler: ipRateLimit(),
       schema: {
         tags: ['members'],
         summary: 'Accept an invitation',

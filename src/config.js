@@ -25,6 +25,11 @@ export const config = {
   accessTokenTtl: env.ACCESS_TOKEN_TTL ?? '15m',
   refreshTokenTtlDays: Number(env.REFRESH_TOKEN_TTL_DAYS ?? 30),
   appUrl: env.APP_URL ?? 'http://localhost:8080',
+  // Per-IP limit on login/signup/refresh/invite-accept.
+  authRateLimitPerMinute: Number(env.AUTH_RATE_LIMIT_PER_MINUTE ?? 20),
+  // Only trust X-Forwarded-For from known proxies, or clients can spoof their IP
+  // past the per-IP limiter. e.g. "uniquelocal" behind the compose nginx.
+  trustProxy: env.TRUST_PROXY || false,
 };
 
 if (config.env === 'production' && config.jwtSecret.startsWith('dev-only')) {
