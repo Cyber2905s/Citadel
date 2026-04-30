@@ -4,9 +4,9 @@
 
 Citadel is a reference backend for B2B SaaS: organizations, members and invitations, JWT sessions with refresh-token rotation, per-tenant API keys, role-based access control, plan tiers with rate limits and usage metering, an audit log, background jobs, and a sample projects/tasks domain. It ships with an admin UI where you can watch isolation, role restrictions and rate limits work.
 
-![Citadel admin UI](docs/screenshot.png)
+![Citadel admin UI: audit log for Acme, with 429 toasts from a rate-limit burst on the free-plan org](docs/screenshot.png)
 
-> _Screenshot/GIF placeholder: record the admin UI switching between two orgs, hitting a 429, and viewing the audit log._
+> _GIF placeholder: a walkthrough of switching orgs, the isolation probe returning 404, and a rate-limit burst._
 
 ## Features
 
@@ -141,6 +141,8 @@ npm test             # needs Postgres + Redis
 npm run lint && npm run format:check
 ```
 
+Ports are configurable if the defaults are taken: `PG_PORT`, `REDIS_PORT`, `API_PORT` and `UI_PORT`, for example in a `.env` next to `docker-compose.yml`.
+
 `npm run migrate` connects as the owner (`MIGRATION_DATABASE_URL`). That role must be a superuser or have `BYPASSRLS`, because it owns the `SECURITY DEFINER` functions. The runner then creates or updates the `citadel_app` role the API uses.
 
 ## API
@@ -175,7 +177,21 @@ List endpoints return `{ data, nextCursor }`. To get the next page, pass `?curso
 
 `npm run loadtest` (script: `scripts/loadtest.js`) creates many enterprise tenants and hammers `GET /v1/projects` with their tokens, so every request goes through JWT verification, the membership lookup, the Redis rate limiter and metering, and an RLS-scoped transaction. `GET /healthz` is included as a framework baseline.
 
-LOAD_TEST_RESULTS
+Measured on 2026-09-27: one API container (a single Node 24 process) with Postgres 18 and Redis 8 in Docker, autocannon on the same laptop (AMD Ryzen 7 7730U, 16 threads, 14 GB RAM), 50 connections, 20 s per run, 50 tenants. The per-IP auth limit was raised for setup only (`AUTH_RATE_LIMIT_PER_MINUTE=10000`) so the script could create the tenants.
+
+| Run | Endpoint                              | Throughput  | p50   | p97.5 | p99   | Errors / non-2xx |
+| --- | ------------------------------------- | ----------- | ----- | ----- | ----- | ---------------- |
+| 1   | `GET /healthz` (baseline)             | 5,778 req/s | 6 ms  | 22 ms | 30 ms | 0 / 0            |
+| 1   | `GET /v1/projects` (full tenant path) | 877 req/s   | 55 ms | 75 ms | 78 ms | 0 / 0            |
+| 2   | `GET /healthz` (baseline)             | 5,490 req/s | 9 ms  | 18 ms | 22 ms | 0 / 0            |
+| 2   | `GET /v1/projects` (full tenant path) | 975 req/s   | 50 ms | 67 ms | 73 ms | 0 / 0            |
+
+Each tenant request makes two short RLS transactions: a membership/plan lookup, then the handler, each doing `BEGIN` / `set_config` / query / `COMMIT`. It also does one Redis `MULTI` and writes two JSON log lines. That per-request round-trip budget, not RLS policy evaluation, is what separates it from the baseline. See future work for how to cut it. Reproduce with:
+
+```bash
+AUTH_RATE_LIMIT_PER_MINUTE=10000 docker compose up -d --build
+API_URL=http://localhost:3000 npm run loadtest
+```
 
 ## Project structure
 
@@ -212,4 +228,5 @@ test/                  node:test suites
 - **OpenTelemetry tracing** across API → queue → worker, with the tenant as a span attribute.
 - **Audit log export and retention** (partition by month, archive to object storage).
 - **Hard-delete / GDPR erasure jobs** for soft-deleted data after a retention window.
+- **Fewer round trips per request:** fold the membership lookup into the handler's transaction and send `BEGIN` and `set_config` in one round trip; cache the plan per tenant.
 - **Refresh tokens in httpOnly cookies** for the browser UI, instead of `localStorage`.
