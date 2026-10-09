@@ -6,7 +6,6 @@ Citadel is a reference backend for B2B SaaS: organizations, members and invitati
 
 ![Citadel admin UI: audit log for Acme, with 429 toasts from a rate-limit burst on the free-plan org](docs/screenshot.png)
 
-
 ## Features
 
 - **Tenant isolation with Postgres Row-Level Security.** Shared schema with `tenant_id` on every table. Each request runs in a transaction with `app.tenant_id` set, and RLS policies filter every read and write. The app connects as a role with no `BYPASSRLS` and no `DELETE` privilege.
