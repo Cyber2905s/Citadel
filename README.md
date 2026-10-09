@@ -6,7 +6,6 @@ Citadel is a reference backend for B2B SaaS: organizations, members and invitati
 
 ![Citadel admin UI: audit log for Acme, with 429 toasts from a rate-limit burst on the free-plan org](docs/screenshot.png)
 
-> _GIF placeholder: a walkthrough of switching orgs, the isolation probe returning 404, and a rate-limit burst._
 
 ## Features
 
@@ -177,7 +176,7 @@ List endpoints return `{ data, nextCursor }`. To get the next page, pass `?curso
 
 `npm run loadtest` (script: `scripts/loadtest.js`) creates many enterprise tenants and hammers `GET /v1/projects` with their tokens, so every request goes through JWT verification, the membership lookup, the Redis rate limiter and metering, and an RLS-scoped transaction. `GET /healthz` is included as a framework baseline.
 
-Measured on 2026-09-27: one API container (a single Node 24 process) with Postgres 18 and Redis 8 in Docker, autocannon on the same laptop (AMD Ryzen 7 7730U, 16 threads, 14 GB RAM), 50 connections, 20 s per run, 50 tenants. The per-IP auth limit was raised for setup only (`AUTH_RATE_LIMIT_PER_MINUTE=10000`) so the script could create the tenants.
+Measured with one API container (a single Node 24 process) with Postgres 18 and Redis 8 in Docker, autocannon on the host machine (AMD Ryzen 7 7730U, 16 threads, 14 GB RAM), 50 connections, 20 s per run, 50 tenants. The per-IP auth limit was raised for setup only (AUTH_RATE_LIMIT_PER_MINUTE=10000) so the script could create the tenants.
 
 | Run | Endpoint                              | Throughput  | p50   | p97.5 | p99   | Errors / non-2xx |
 | --- | ------------------------------------- | ----------- | ----- | ----- | ----- | ---------------- |
